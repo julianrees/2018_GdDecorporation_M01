@@ -12,26 +12,62 @@ setwd('./')
 #---- Data import ----
 samplelist <- read_excel('../Data/18-M01 LSC sample order.xlsx')
 rcounts <- list()
-rcounts[[1]] <- samplelist[-1,1:2]
+days <- list()
+
+std_bottles = 9
+groups = 18
 
 
 
-c27 <- samplelist[-1,1:2]
-colnames(c27) <- c('Sample','Group')
-c27$Group[3:11] <- 'Standard'
-c27$Group <- as.factor(c27$Group)
-c27 <- c27[1:49,]
-c27 <- cbind(c27, read_csv('../Data/20180327_1613/ExperTable.csv', skip = 5)[,5])
-c27 <- c27[which(is.na(c27$Group) == FALSE),]
-c27 <- cbind(c27, Day = NA)
 
 
-days <- c('Standard',1,2)
-c27$Day[1:9] <- days[1]
-c27$Day[10:27] <- days[2]
-c27$Day[28:45] <- days[3]
-c27$Sample[10:45] <- "Urine"
-str(c27)
+
+days[[1]] <- c('Standard',1,2)
+days[[2]] <- c('Standard',3,4,5,6)
+i = 1
+for (i in length(days)){
+  j = (2*i)-1
+  k = 2*i
+  rcounts[[i]] <- samplelist[-1,j:k]
+  colnames(rcounts[[i]]) <- c('Sample','Group')
+  rcounts[[i]]$Group[3:11] <- 'Standard'
+  rcounts[[i]]$Group <- as.factor(rcounts[[i]]$Group)
+  rcounts[[i]] <- rcounts[[i]][1:49,]
+  rcounts[[i]] <- cbind(rcounts[[i]], read_csv('../Data/20180327_1613/ExperTable.csv', skip = 5)[,5])
+  rcounts[[i]] <- rcounts[[i]][which(is.na(rcounts[[1]]$Group) == FALSE),]
+  rcounts[[i]] <- cbind(rcounts[[i]], Day = NA)
+  
+  
+  rcounts[[i]]$Day[1:9] <- days[[i]][1]
+  rcounts[[i]]$Day[10:27] <- days[[i]][2]
+  rcounts[[i]]$Day[28:45] <- days[[i]][3]
+  rcounts[[i]]$Sample[10:45] <- "Urine"
+}
+
+
+
+rcounts[[1]] <- samplelist[-1,colm[[1]]]
+colnames(rcounts[[1]]) <- c('Sample','Group')
+rcounts[[1]]$Group[3:11] <- 'Standard'
+rcounts[[1]]$Group <- as.factor(rcounts[[1]]$Group)
+rcounts[[1]] <- rcounts[[1]][1:49,]
+rcounts[[1]] <- cbind(rcounts[[1]], read_csv('../Data/20180327_1613/ExperTable.csv', skip = 5)[,5])
+rcounts[[1]] <- rcounts[[1]][which(is.na(rcounts[[1]]$Group) == FALSE),]
+rcounts[[1]] <- cbind(rcounts[[1]], Day = NA)
+
+
+rcounts[[1]]$Day[1:9] <- days[1]
+rcounts[[1]]$Day[10:27] <- days[2]
+rcounts[[1]]$Day[28:45] <- days[3]
+rcounts[[1]]$Sample[10:45] <- "Urine"
+str(rcounts[[1]])
+
+
+
+
+
+rcounts[[1]]
+
 
 
 c29 <- samplelist[-1,3:4]
