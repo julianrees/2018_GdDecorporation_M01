@@ -13,6 +13,7 @@ setwd('./')
 nGroups = 18
 groupSize = 3
 excretaDays = 8
+treatments = c('Control','-24h','-6h','-1h','+1h','+6h','+24h','+48h','+6d')
 
 #---- Data import ----
 samplelist <- read_excel('LSC_sample_order.xlsx', col_names = FALSE)
@@ -24,12 +25,11 @@ pe_weights <- cbind(pe_weights, sample_scale_factor =
 
 samples <- cbind(samplelist, counts)
 colnames(samples) <- c('Group', 'Organ', 'Individual','CPM')
-str(samples)
-route <- array(dim = nrow(samples))
-route[which(samples$Group == 'B' | samples$Group == 'C' | samples$Group == 'D' | samples$Group == 'E' | 
-        samples$Group == 'F' | samples$Group == 'G' | samples$Group == 'H' | samples$Group == 'I')] <- 'IP'
-route[which(samples$Group == 'K' | samples$Group == 'L' | samples$Group == 'M' | samples$Group == 'N' | 
+route <- array(dim = nrow(samples), 'IP')
+
+route[which(samples$Group == 'J' | samples$Group == 'K' | samples$Group == 'L' | samples$Group == 'M' | samples$Group == 'N' | 
               samples$Group == 'O' | samples$Group == 'P' | samples$Group == 'Q' | samples$Group == 'R')] <- 'PO'
+
 samples <- cbind(samples, Route = as.factor(route))
 standards <- samples[which(samples$Group == 'STD'),]
 standards <- cbind(standards, pe_weights[1:nrow(standards),6])
@@ -78,16 +78,46 @@ mice[,4:16] <- mice[,4:16] / mice[,16] * 100
 gr_excreta[,4:12] <- gr_excreta[,4:12] / gr_excreta[,12] * 100
 
 colnames(mice) <- c(colnames(mice)[1:13], 'Feces', 'Urine','Total')
+mice <- cbind(mice, Treatment = as.factor(rbind(treatments, treatments, treatments)))
+mice$Treatment <- factor(mice$Treatment, levels = c('Control','-24h','-6h','-1h','+1h','+6h','+24h','+48h','+6d'))
 
-rd <- melt(mice, id = c('Group','Individual','Route'))
-colnames(rd) <- c(colnames(rd)[1:3],'Organ','RD')
+levels(mice$Treatment)
+
+rd <- melt(mice, id = c('Group','Individual','Route','Treatment'))
+colnames(rd) <- c(colnames(rd)[1:4],'Organ','RD')
 
 rd_org <- rd[which(rd$Organ != 'Urine' & rd$Organ != 'Feces' & rd$Organ != 'Total'),]
 
-mexcreta <- melt(gr_excreta[,-12], id = c('Group', 'Route', 'Type'))
-colnames(mexcreta)[4:5] <- c('Day','RD')
+
+gr_excreta <- cbind(gr_excreta, Treatment = as.factor(rbind(treatments, treatments)))
+gr_excreta$Treatment <- factor(gr_excreta$Treatment, levels = c('Control','-24h','-6h','-1h','+1h','+6h','+24h','+48h','+6d'))
+mexcreta <- melt(gr_excreta[,-12], id = c('Group', 'Route', 'Type','Treatment'))
+colnames(mexcreta)[5:6] <- c('Day','RD')
 
 
+
+
+
+ggplot(rd_org, aes(x = Group, y = RD)) + 
+  geom_boxplot(aes(color = Group)) + 
+  theme_bw() + 
+  facet_wrap(~Organ, scales = "free")
+
+ggplot(rd_org, aes(x = Treatment, y = RD)) + 
+  geom_point(aes(color = Treatment, fill = Treatment)) + 
+  theme_bw() + 
+  facet_grid(Organ~Route, scales = "free")
+
+ggplot(rd_org, aes(x = Treatment, y = RD)) + 
+  geom_jitter(aes(color = Treatment), width = 0.2) + 
+  theme_bw() + 
+  facet_grid(Organ~Route, scales = "free")
+
+ggplot(rd_org, aes(x = Organ, y = RD)) + 
+  geom_boxplot(aes(fill = Route, color = Route), 
+               position = position_dodge2(preserve = "total")) + 
+  theme_bw() + 
+  facet_grid(rows = vars(Treatment))
 
 ggplot(rd_org, aes(x = Group, y = RD)) + 
   geom_jitter(aes(color = Group)) + 
@@ -96,16 +126,43 @@ ggplot(rd_org, aes(x = Group, y = RD)) +
   ylim(0,max(rd_org$RD))
 
 ggplot(mexcreta, aes(x = Day, y = RD)) + 
-  geom_col(aes(fill = Group), position = 'dodge') +
+  geom_col(aes(fill = Treatment), position = 'dodge') +
   theme_bw() + 
-  facet_wrap(~Type)
+  facet_grid(Type~Route)
+
+ggplot(mexcreta, aes(x = Day, y = RD)) + 
+  geom_col(aes(fill = Route), position = 'dodge') +
+  theme_bw() + 
+  facet_grid(Type~Treatment)
+
+ggplot(mexcreta, aes(x = Day, y = RD)) + 
+  geom_col(aes(fill = Type), position = 'dodge') +
+  theme_bw() + 
+  facet_grid(Treatment~Route)
+
+ggplot(mexcreta, aes(x = Day, y = RD)) + 
+  geom_col(aes(fill = Type), position = 'dodge') +
+  theme_bw() + 
+  ylim(0,5) +
+  facet_grid(Treatment~Route)
+
+
+ggplot(mexcreta, aes(x = Day, y = RD)) + 
+  geom_point(aes(color = Type), position = 'jitter') +
+  theme_bw() + 
+  facet_grid(Treatment~Route) 
 
 ggplot(mexcreta, aes(x = Day, y = RD)) + 
   geom_col(aes(fill = Type), position = 'dodge') +
   theme_bw() + 
   facet_wrap(~Group)
 
-ggplot(mexcreta, aes(x = Group, y = RD)) + 
+ggplot(mexcreta, aes(x = Treatment, y = RD)) + 
   geom_col(aes(fill = Day)) + 
   theme_bw() + 
-  facet_wrap(~Type)
+  facet_wrap(Route~Type)
+
+ggplot(mexcreta, aes(x = Treatment, y = RD)) + 
+  geom_col(aes(fill = Day)) + 
+  theme_bw() + 
+  facet_wrap(Type~Route)
