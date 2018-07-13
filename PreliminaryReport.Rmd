@@ -1,0 +1,62 @@
+---
+title: "Preliminary Report: 18-M01"
+author: "Julian Rees"
+date: "7/12/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Summary
+
+This experiment assessed the effect of treatment with HOPO on the retention of Gd in Swiss-Webster mice. Variables included the treatment time relative to the Gd injection and the route of administration.
+
+The Gd formulation was Gd-DOTA, synthesized "in-house" as an analogue of the MRI contrast agent Dotarem. The molar ratio of DOTA:Gd was 1.25:1, similar to the clinical formulation. The total dose of Gd was 0.1 mmol / kg. A spike of Gd-153 was added for a target activity of 50 nCi / mouse. The molar ratio of natural abundance Gd to Gd-153 was 33 million to 1.
+
+The HOPO formulations were prepared to contain a dose of 100 $\mu$mol / kg in 0.5 mL at pH 7.4 for IP administration or 600 $\mu$mol / kg in 0.3 mL at pH 5.5 for PO administration.
+
+```{r echo=FALSE}
+library(knitr)
+read_chunk('biodistribution_data.R')
+```
+
+```{r include=FALSE}
+<<header>>
+<<data_processing>>
+<<plotting_headers>>
+```
+
+
+### Results
+
+For all experiment groups, the total excreted dose was >97%, and in most cases was >99%. Shown below is a breakdown of total Gd-153 excretion for each group.
+
+```{r echo=FALSE, warning=FALSE, error=FALSE}
+<<total_excreta>>
+```
+
+A breakdown of Gd-153 contained in excreta by day, type, and route indicates no clear deviations from the control groups. Without a good measure of statistical significance, the differences in IP vs. PO control groups, as well as the marked increase in Day 1 feces excretion in the PO +48 hour group, when no treatment has yet been administered, would seem to indicate that there are no significant changes in total excretion
+
+```{r echo=FALSE, warning=FALSE, error=FALSE}
+<<excreta_by_day>>
+```
+
+The Gd-153 remaining in the body is largely distributed to the skeleton, soft tissue, liver, kidneys, and ART.  The remaining organs (lungs, heart, kidneys, spleen, and thymus) contain a level of Gd-153 that is below the threshold of statistical significance above background. The following figures show the entire breakdown of bodily accumulation as a function of organ and treatment type, and the selected organs that have measurable accumulation (on a variable scale).
+
+```{r echo=FALSE, warning=FALSE, error=FALSE}
+<<biod_pointsbyorgan>>
+<<biod_pointsbytreatment>>
+<<biod_points_selectedorgans>>
+```
+
+I'm a little hesitant to show these data using box plots or columns for $n = 3$, but this is the nicest way to look at differences between IP and PO administration. 
+
+```{r echo=FALSE, warning=FALSE, error=FALSE}
+<<biod_boxes_byorgan>>
+<<biod_boxes_bytreatment>>
+```
+
+It's unclear what the statistical significance is yet, but one interesting thing is that for prophylaxis, IP administration seems to result in less Gd-153 accumulation than PO, however when administered after the Gd injection, PO administration is apparently more effective, particularly in the case of the skeleton.  I'll have to go have a look at the C-14 BioD data and see if this makes sense.  It's also worth noting that in all cases aside from the skeleton, the control groups have equal or less Gd-153 retention than the treatment groups. Early treatment with PO HOPO following Gd injection seems to attenuate the degree of skeletal retention.
+

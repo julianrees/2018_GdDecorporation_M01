@@ -1,21 +1,24 @@
 #---- Header content ----
+## @knitr header
 library(ggplot2)
 library(dplyr)
 #library(plyr)
 library(reshape2)
 library(outliers)
+library(multcomp)
 # library(xlsx)
 library(readxl)
 library(readr)
+library(knitr)
 
+## @knitr data_processing
 setwd('./')
-#---- Experiment details ----
+
 nGroups = 18
 groupSize = 3
 excretaDays = 8
 treatments = c('Control','-24h','-6h','-1h','+1h','+6h','+24h','+48h','+6d')
-
-#---- Data import ----
+# does one comment hurt?
 samplelist <- read_excel('LSC_sample_order.xlsx', col_names = FALSE)
 counts <- read_csv('../Data/LSC/18M01_lsc1234.csv', col_names = FALSE)[,3]
 pe_weights <- read_excel('../Data/18-M01_PE_Weights.xlsx', sheet = 2)
@@ -55,7 +58,6 @@ excreta <- cbind(excreta, Scaled_CPM = excreta$CPM / excreta$sample_scale_factor
 
 
 
-# Compile all the mice and convert to the %RD 
 
 mice <- dcast(tissues[,c(1:3,5,7)], Individual+Group+Route ~ Organ, value.var = 'Scaled_CPM')
 gr_excreta <- dcast(excreta[,c(1:3,5,7)], Group+Route+Type ~ Day, value.var = 'Scaled_CPM')
@@ -94,6 +96,32 @@ gr_excreta$Treatment <- factor(gr_excreta$Treatment, levels = c('Control','-24h'
 mexcreta <- melt(gr_excreta[,-12], id = c('Group', 'Route', 'Type','Treatment'))
 colnames(mexcreta)[5:6] <- c('Day','RD')
 
+rd_org_select <- rd_org[which(rd_org$Organ == 'ART' | 
+               rd_org$Organ == 'Kidneys' | 
+               rd_org$Organ == 'Liver' | 
+               rd_org$Organ == 'Skeleton' | 
+               rd_org$Organ == 'Soft'),]
+
+
+
+## @knitr plotting_headers
+w = 0.65
+fwid = 9
+fhei = 6
+theme_set(theme_bw())
+theme_update(plot.title = element_text(hjust = 0.5),
+             panel.grid.major = element_blank(),
+             panel.grid.minor = element_blank())
+
+treatpalette = c('#41ad5b','#08519c','#3182bd','#6baed6','#9ecae1','#a50f15','#de2d26','#fb6a4a','#fc9272')
+dayspalette = c('#f7fcf5','#e5f5e0','#c7e9c0','#a1d99b','#74c476','#41ab5d','#238b45','#005a32')
+dayspalette <- dayspalette[8:1]
+##
+
+
+
+
+
 
 
 
@@ -104,20 +132,60 @@ ggplot(rd_org, aes(x = Group, y = RD)) +
   facet_wrap(~Organ, scales = "free")
 
 ggplot(rd_org, aes(x = Treatment, y = RD)) + 
-  geom_point(aes(color = Treatment, fill = Treatment)) + 
+  geom_jitter(aes(color = Treatment, fill = Treatment)) + 
   theme_bw() + 
-  facet_grid(Organ~Route, scales = "free")
+  facet_grid(Organ~Route, scales = "free") + 
+  scale_color_manual(values = treatpalette)
 
+
+## @knitr biod_pointsbytreatment
 ggplot(rd_org, aes(x = Treatment, y = RD)) + 
   geom_jitter(aes(color = Treatment), width = 0.2) + 
-  theme_bw() + 
-  facet_grid(Organ~Route, scales = "free")
+  facet_grid(Organ~Route) +#, scales = "free") + 
+  theme(axis.text.x = element_text(angle = 35, hjust = 1)) +
+  scale_y_continuous(name = expression(''^153*Gd~'Content (% RD)')) +
+  scale_color_manual(values = treatpalette)
+  
 
+
+## @knitr biod_pointsbyorgan
 ggplot(rd_org, aes(x = Organ, y = RD)) + 
+  geom_jitter(aes(color = Treatment), width = 0.2) + 
+  facet_grid(Treatment~Route) +#, scales = "free") + 
+  theme(axis.text.x = element_text(angle = 35, hjust = 1)) +
+  scale_y_continuous(name = expression(''^153*Gd~'Content (% RD)')) +
+  scale_color_manual(values = treatpalette)
+
+
+
+## @knitr biod_points_selectedorgans
+ggplot(rd_org_select, aes(x = Treatment, y = RD)) + 
+  geom_jitter(aes(color = Treatment), width = 0.1) + 
+  facet_grid(Organ~Route, scales = "free") + 
+  theme(axis.text.x = element_text(angle = 35, hjust = 1)) +
+  scale_y_continuous(name = expression(''^153*Gd~'Content (% RD)')) +
+  scale_color_manual(values = treatpalette)
+
+## @knitr biod_boxes_byorgan
+ggplot(rd_org_select, aes(x = Organ, y = RD)) + 
   geom_boxplot(aes(fill = Route, color = Route), 
                position = position_dodge2(preserve = "total")) + 
-  theme_bw() + 
+  scale_fill_manual(values = c('#d95f02', '#1b9e77')) +
+  scale_color_manual(values = c('#d95f02', '#1b9e77')) +
+  scale_y_continuous(name = expression(''^153*Gd~'Content (% RD)')) +
+  theme(axis.text.x = element_text(angle = 35, hjust = 1)) +
   facet_grid(rows = vars(Treatment))
+
+## @knitr biod_boxes_bytreatment
+ggplot(rd_org_select, aes(x = Treatment, y = RD)) + 
+  geom_boxplot(aes(fill = Route, color = Route), 
+               position = position_dodge2(preserve = "total")) + 
+  scale_fill_manual(values = c('#d95f02', '#1b9e77')) +
+  scale_color_manual(values = c('#d95f02', '#1b9e77')) +
+  scale_y_continuous(name = expression(''^153*Gd~'Content (% RD)')) +
+  theme(axis.text.x = element_text(angle = 35, hjust = 1)) +
+  facet_grid(rows = vars(Organ))
+## @knitr end
 
 ggplot(rd_org, aes(x = Group, y = RD)) + 
   geom_jitter(aes(color = Group)) + 
@@ -147,6 +215,8 @@ ggplot(mexcreta, aes(x = Day, y = RD)) +
   facet_grid(Treatment~Route)
 
 
+
+
 ggplot(mexcreta, aes(x = Day, y = RD)) + 
   geom_point(aes(color = Type), position = 'jitter') +
   theme_bw() + 
@@ -159,10 +229,30 @@ ggplot(mexcreta, aes(x = Day, y = RD)) +
 
 ggplot(mexcreta, aes(x = Treatment, y = RD)) + 
   geom_col(aes(fill = Day)) + 
-  theme_bw() + 
+  scale_y_continuous(limits = c(0,105), expand = c(0,0)) + 
+  geom_hline(yintercept = 100) + 
+  scale_fill_manual(values = dayspalette) +
   facet_wrap(Route~Type)
 
+## @knitr excreta_by_day
 ggplot(mexcreta, aes(x = Treatment, y = RD)) + 
   geom_col(aes(fill = Day)) + 
-  theme_bw() + 
+  scale_y_continuous(limits = c(0,105), expand = c(0,0), name = expression(''^153*Gd~'Content (% RD)')) + 
+  geom_hline(yintercept = 100, linetype = 2) + 
+  scale_fill_manual(values = dayspalette) +
+  theme(axis.text.x = element_text(angle = 35, hjust = 1)) +
   facet_wrap(Type~Route)
+
+## @knitr total_excreta
+ggplot(mexcreta, aes(x = Treatment, y = RD)) + 
+  geom_col(aes(fill = Type)) + 
+  facet_wrap(~Route) + 
+  scale_y_continuous(limits = c(0,105), expand = c(0,0), name = expression(''^153*Gd~'Content (% RD)')) + 
+  geom_hline(yintercept = 100, linetype = 2) + 
+  theme(axis.text.x = element_text(angle = 35, hjust = 1)) +
+  scale_fill_manual(values = c('chartreuse3','darkorchid2'))
+  
+
+## @knitr statistics
+fit <- aov(RD ~ Treatment, data = rd_org[which(rd_org$Organ == 'Skeleton' & rd_org$Route == 'IP'),])
+summary(glht(fit, linfct=mcp(Treatment="Dunnett")))
